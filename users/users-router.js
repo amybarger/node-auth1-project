@@ -1,26 +1,55 @@
-const db = require("../database/config");
+const express = require("express");
+const Users = require("./users-model");
 
-async function add(user) {
-  const [id] = await db("users").insert(user);
-  return findById(id);
-}
+const router = express.Router();
 
-function find() {
-  return db("users")
-    .select("id", "username", "password")
-    .where(filter);
-}
+router.get("/users", async (req, res, next) => {
+  try {
+    res.json(await Users.find());
+  } catch (err) {
+    next(err);
+  }
+});
 
-function findById(id) {
-  return db("users")
-    .select("id", "username")
-    .where({ id })
-    .first();
-}
+router.post("/users", async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    const user = await Users.findBy({ username }).first();
 
-module.exports = {
-  add,
-  find,
-  findBy,
-  findById
-};
+    if (user) {
+      return res.status(409).json({
+        message: "Username is already taken"
+      });
+    }
+
+    const newUser = await Users.add({
+      username,
+      password
+    });
+
+    res.status(201).json(newUser);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/login", async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    const user = await Users.findBy({ username }).first();
+
+    if (!user) {
+      return res.status(401).json({
+        message: "You shall not pass!"
+      });
+    }
+
+    res.json({
+      message: `Welcome ${user.username}!`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
