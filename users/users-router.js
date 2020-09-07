@@ -47,18 +47,14 @@ router.post("/login", async (req, res, next) => {
       });
     }
 
-    // compare the plain text password from the request body to the
-    // hash we have stored in the database. returns true/false.
     const passwordValid = await bcrypt.compare(password, user.password);
 
-    // check if hash of request body password matches the hash we already have
     if (!passwordValid) {
       return res.status(401).json({
         message: "Invalid Credentials"
       });
     }
 
-    // create a new session for the user
     req.session.user = user;
 
     res.json({
